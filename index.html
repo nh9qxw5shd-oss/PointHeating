@@ -485,7 +485,7 @@ const cancelEditBtn = document.getElementById("cancelEditBtn");
     if (!rows.length) {
       const tr = document.createElement("tr");
       const td = document.createElement("td");
-      td.colSpan = 9;
+      td.colSpan = 10;
       td.textContent = "No points found for this filter.";
       td.style.textAlign = "center";
       td.style.padding = "1rem";
@@ -573,15 +573,6 @@ tdEdit.appendChild(btnEdit);
       });
     }
 
-cancelEditBtn.addEventListener("click", () => {
-  newAreaInput.value = "";
-  newPointInput.value = "";
-  newLocationInput.value = "";
-  newNotesInput.value = "";
-  newAreaInput.disabled = false;
-  newPointInput.disabled = false;
-});
-
     summaryText.textContent = `${rows.length} points loaded${currentAreaFilter !== "ALL" ? ` · ${currentAreaFilter}` : ""}`;
   }
 
@@ -664,40 +655,40 @@ function onEdit(row){
   addPointForm.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-  async function onDelete(row) {
-    if (isSaving) return;
+ async function onDelete(row) {
+  if (isSaving) return;
 
-    const confirmed = window.confirm(
-      `Delete point ${row.point_number} in area ${row.area}?`
-    );
-    if (!confirmed) return;
+  const confirmed = window.confirm(
+    `Are you sure you want to delete point ${row.point_number} in ${row.area}?\n\nThis cannot be undone.`
+  );
+  if (!confirmed) return;
 
-    clearError();
-    isSaving = true;
-    renderTable();
+  clearError();
+  isSaving = true;
+  renderTable();
 
-    const { error } = await supabaseClient
-      .from(TABLE_NAME)
-      .delete()
-      .eq("area", row.area)
-      .eq("point_number", row.point_number);
+  const { error } = await supabaseClient
+    .from(TABLE_NAME)
+    .delete()
+    .eq("area", row.area)
+    .eq("point_number", row.point_number);
 
-    if (error) {
-      console.error(error);
-      showError("Failed to delete point. Check Supabase permissions (RLS).");
-      isSaving = false;
-      renderTable();
-      return;
-    }
-
-    // Update local cache
-    allPoints = allPoints.filter(
-      p => !(p.area === row.area && p.point_number === row.point_number)
-    );
-    renderAreaOptions();
+  if (error) {
+    console.error(error);
+    showError("Failed to delete point. Check Supabase permissions (RLS).");
     isSaving = false;
     renderTable();
+    return;
   }
+
+  allPoints = allPoints.filter(
+    p => !(p.area === row.area && p.point_number === row.point_number)
+  );
+
+  renderAreaOptions();
+  isSaving = false;
+  renderTable();
+}
 
   async function onAddPoint(event) {
     event.preventDefault();
@@ -768,6 +759,15 @@ newPointInput.disabled = false;
   });
 
   addPointForm.addEventListener("submit", onAddPoint);
+
+cancelEditBtn.addEventListener("click", () => {
+  newAreaInput.value = "";
+  newPointInput.value = "";
+  newLocationInput.value = "";
+  newNotesInput.value = "";
+  newAreaInput.disabled = false;
+  newPointInput.disabled = false;
+});
 
   // ===== Initial load =====
   loadData();
