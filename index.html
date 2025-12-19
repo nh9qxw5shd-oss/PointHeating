@@ -74,11 +74,22 @@
       gap: 0.25rem;
     }
 
-    .status-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 999px;
-    }
+    /* Make status contents align like normal text */
+.status-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  line-height: 1;
+}
+
+/* Force dot to sit dead-centre, not baseline-wobble */
+.status-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  flex: 0 0 10px;
+}
 
     .green { background-color: #10b981; }
     .amber { background-color: #f59e0b; }
@@ -308,6 +319,7 @@
       <input id="newNotes" type="text" placeholder="Defective heater / none fitted" />
     </div>
     <button type="submit" class="btn btn-primary">Add / update point</button>
+<button type="button" id="cancelEditBtn" class="btn btn-secondary">Cancel edit</button>
   </form>
 
   <div id="errorBanner" class="error-banner"></div>
@@ -325,6 +337,7 @@
           <th>Hours since</th>
           <th>Status</th>
           <th>Treat</th>
+          <th>Edit</th>
           <th>Delete</th>
         </tr>
       </thead>
@@ -369,6 +382,7 @@
   const newPointInput  = document.getElementById("newPoint");
   const newLocationInput = document.getElementById("newLocation");
   const newNotesInput  = document.getElementById("newNotes");
+const cancelEditBtn = document.getElementById("cancelEditBtn");
 
   // ===== Clock =====
   function updateClock() {
@@ -505,14 +519,20 @@
         tdHours.textContent = status.hoursText;
 
         const tdStatus = document.createElement("td");
-        tdStatus.classList.add("status-cell");
-        const dot = document.createElement("span");
-        dot.classList.add("status-dot", status.className);
-        const txt = document.createElement("span");
-        txt.classList.add("status-text");
-        txt.textContent = status.label;
-        tdStatus.appendChild(dot);
-        tdStatus.appendChild(txt);
+
+const statusWrap = document.createElement("span");
+statusWrap.classList.add("status-wrap");
+
+const dot = document.createElement("span");
+dot.classList.add("status-dot", status.className);
+
+const txt = document.createElement("span");
+txt.classList.add("status-text");
+txt.textContent = status.label;
+
+statusWrap.appendChild(dot);
+statusWrap.appendChild(txt);
+tdStatus.appendChild(statusWrap);
 
         const tdAction = document.createElement("td");
         const btnTreat = document.createElement("button");
@@ -521,6 +541,14 @@
         btnTreat.disabled = isSaving;
         btnTreat.addEventListener("click", () => onTreatNow(row));
         tdAction.appendChild(btnTreat);
+
+const tdEdit = document.createElement("td");
+const btnEdit = document.createElement("button");
+btnEdit.classList.add("btn", "btn-secondary");
+btnEdit.textContent = "Edit";
+btnEdit.disabled = isSaving;
+btnEdit.addEventListener("click", () => onEdit(row));
+tdEdit.appendChild(btnEdit);
 
         const tdDelete = document.createElement("td");
         const btnDel = document.createElement("button");
@@ -538,11 +566,21 @@
         tr.appendChild(tdHours);
         tr.appendChild(tdStatus);
         tr.appendChild(tdAction);
+        tr.appendChild(tdEdit);
         tr.appendChild(tdDelete);
 
         pointsTable.appendChild(tr);
       });
     }
+
+cancelEditBtn.addEventListener("click", () => {
+  newAreaInput.value = "";
+  newPointInput.value = "";
+  newLocationInput.value = "";
+  newNotesInput.value = "";
+  newAreaInput.disabled = false;
+  newPointInput.disabled = false;
+});
 
     summaryText.textContent = `${rows.length} points loaded${currentAreaFilter !== "ALL" ? ` · ${currentAreaFilter}` : ""}`;
   }
@@ -609,6 +647,22 @@
     isSaving = false;
     renderTable();
   }
+
+function onEdit(row){
+  // Populate the form with the selected row
+  newAreaInput.value = row.area || "";
+  newPointInput.value = row.point_number || "";
+  newLocationInput.value = row.location || "";
+  newNotesInput.value = row.notes || "";
+
+  // Lock the unique key fields so they can't accidentally “rename” the record
+  // (renaming is basically delete + create and people will mess it up)
+  newAreaInput.disabled = true;
+  newPointInput.disabled = true;
+
+  // Optional: scroll user to form so they actually see it
+  addPointForm.scrollIntoView({ behavior: "smooth", block: "start" });
+}
 
   async function onDelete(row) {
     if (isSaving) return;
@@ -701,6 +755,10 @@
     newPointInput.value = "";
     newLocationInput.value = "";
     newNotesInput.value = "";
+
+newAreaInput.disabled = false;
+newPointInput.disabled = false;
+
   }
 
   // ===== Events =====
