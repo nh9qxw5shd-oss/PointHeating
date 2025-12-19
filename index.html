@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Winter Points Logbook</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f3f4f6;
+      margin: 0;
+      padding: 0;
+      color: #111827;
+    }
+
+    header {
+      background: #111827;
+      color: #f9fafb;
+      padding: 1rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    header h1 {
+      font-size: 1.2rem;
+      margin: 0;
+    }
+
+    header .env {
+      font-size: 0.8rem;
+      opacity: 0.8;
+    }
+
+    main {
+      padding: 1.5rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 1rem;
+      align-items: center;
+    }
+
+    .controls label {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #374151;
+    }
+
+    .controls select {
+      padding: 0.3rem 0.5rem;
+      border-radius: 0.375rem;
+      border: 1px solid #d1d5db;
+      background: #ffffff;
+      font-size: 0.9rem;
+    }
+
+    .controls .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      font-size: 0.8rem;
+      margin-left: auto;
+    }
+
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+    }
+
+    .green { background-color: #10b981; }
+    .amber { background-color: #f59e0b; }
+    .red   { background-color: #ef4444; }
+    .grey  { background-color: #9ca3af; }
+
+    .card {
+      background: #ffffff;
+      border-radius: 0.75rem;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+      padding: 1rem;
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+
+    thead {
+      background: #f9fafb;
+    }
+
+    th, td {
+      padding: 0.5rem 0.6rem;
+      border-bottom: 1px solid #e5e7eb;
+      text-align: left;
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+
+    th {
+      font-weight: 600;
+      color: #4b5563;
+      position: sticky;
+      top: 0;
+      background: #f9fafb;
+      z-index: 1;
+    }
+
+    td.notes {
+      white-space: normal;
+      max-width: 300px;
+    }
+
+    .status-cell {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .status-text {
+      font-size: 0.8rem;
+      color: #4b5563;
+    }
+
+    .btn {
+      padding: 0.3rem 0.6rem;
+      border-radius: 0.375rem;
+      border: none;
+      font-size: 0.8rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .btn-primary {
+      background-color: #111827;
+      color: #f9fafb;
+    }
+
+    .btn-primary:disabled {
+      background-color: #6b7280;
+      cursor: default;
+    }
+
+    .btn-secondary {
+      background-color: #e5e7eb;
+      color: #374151;
+    }
+
+    .btn-danger {
+      background-color: #ef4444;
+      color: #f9fafb;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.1rem 0.5rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      background: #e5e7eb;
+      color: #374151;
+    }
+
+    .meta-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.75rem;
+      font-size: 0.8rem;
+      color: #6b7280;
+    }
+
+    .error-banner {
+      background: #fee2e2;
+      color: #991b1b;
+      border-radius: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      margin-bottom: 0.75rem;
+      font-size: 0.8rem;
+      display: none;
+    }
+
+    .loading {
+      font-size: 0.85rem;
+      color: #6b7280;
+      margin-bottom: 0.5rem;
+    }
+
+    .add-form {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+      align-items: flex-end;
+      font-size: 0.8rem;
+    }
+
+    .add-form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+    }
+
+    .add-form-group label {
+      font-weight: 600;
+      color: #374151;
+    }
+
+    .add-form-group input {
+      padding: 0.3rem 0.4rem;
+      border-radius: 0.375rem;
+      border: 1px solid #d1d5db;
+      font-size: 0.8rem;
+      min-width: 140px;
+    }
+
+    @media (max-width: 640px) {
+      header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+      }
+      .controls {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .controls .legend {
+        margin-left: 0;
+      }
+      .add-form {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .add-form-group input {
+        min-width: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+<header>
+  <h1>Winter Points Logbook</h1>
+  <div class="env">GitHub / Supabase · Killfrost tracker</div>
+</header>
+
+<main>
+  <div class="controls">
+    <div>
+      <label for="areaSelect">MOM area:</label>
+      <select id="areaSelect">
+        <option value="ALL">All areas</option>
+        <!-- dynamic options -->
+      </select>
+    </div>
+
+    <div class="legend">
+      <span class="legend-item">
+        <span class="status-dot green"></span> &lt; 24h
+      </span>
+      <span class="legend-item">
+        <span class="status-dot amber"></span> 24–48h
+      </span>
+      <span class="legend-item">
+        <span class="status-dot red"></span> &gt; 48h
+      </span>
+      <span class="legend-item">
+        <span class="status-dot grey"></span> Not treated
+      </span>
+    </div>
+  </div>
+
+  <div class="meta-row">
+    <div id="summaryText">Loading points…</div>
+    <div>Now: <span id="clock"></span></div>
+  </div>
+
+  <!-- Add / update point form -->
+  <form id="addPointForm" class="add-form">
+    <div class="add-form-group">
+      <label for="newArea">Area</label>
+      <input id="newArea" type="text" placeholder="e.g. Derby" required />
+    </div>
+    <div class="add-form-group">
+      <label for="newPoint">Point</label>
+      <input id="newPoint" type="text" placeholder="e.g. 123A" required />
+    </div>
+    <div class="add-form-group">
+      <label for="newLocation">Location</label>
+      <input id="newLocation" type="text" placeholder="e.g. West Jn" />
+    </div>
+    <div class="add-form-group">
+      <label for="newNotes">Notes</label>
+      <input id="newNotes" type="text" placeholder="Defective heater / none fitted" />
+    </div>
+    <button type="submit" class="btn btn-primary">Add / update point</button>
+  </form>
+
+  <div id="errorBanner" class="error-banner"></div>
+
+  <div class="card">
+    <div id="loading" class="loading">Connecting to Supabase…</div>
+    <table id="pointsTable">
+      <thead>
+        <tr>
+          <th>Area</th>
+          <th>Point</th>
+          <th>Location</th>
+          <th>Notes</th>
+          <th>Last treated</th>
+          <th>Hours since</th>
+          <th>Status</th>
+          <th>Treat</th>
+          <th>Delete</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- populated by JS -->
+      </tbody>
+    </table>
+  </div>
+</main>
+
+<!-- Supabase client -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  // ===== CONFIG: FILL THESE IN =====
+  const SUPABASE_URL = "https://YOUR-PROJECT-ID.supabase.co";
+  const SUPABASE_ANON_KEY = "YOUR_ANON_KEY_HERE";
+
+  // Table name in Supabase
+  const TABLE_NAME = "points_winter_log";
+
+  // RAG thresholds (hours)
+  const GREEN_LIMIT_HOURS = 24;
+  const AMBER_LIMIT_HOURS = 48;
+
+  // ===== Supabase client =====
+  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  // ===== UI state =====
+  let allPoints = []; // rows from Supabase
+  let currentAreaFilter = "ALL";
+  let isSaving = false;
+
+  const areaSelect   = document.getElementById("areaSelect");
+  const pointsTable  = document.getElementById("pointsTable").querySelector("tbody");
+  const summaryText  = document.getElementById("summaryText");
+  const clockEl      = document.getElementById("clock");
+  const errorBanner  = document.getElementById("errorBanner");
+  const loadingEl    = document.getElementById("loading");
+
+  const addPointForm   = document.getElementById("addPointForm");
+  const newAreaInput   = document.getElementById("newArea");
+  const newPointInput  = document.getElementById("newPoint");
+  const newLocationInput = document.getElementById("newLocation");
+  const newNotesInput  = document.getElementById("newNotes");
+
+  // ===== Clock =====
+  function updateClock() {
+    const now = new Date();
+    const pad = (n) => n.toString().padStart(2, "0");
+    const ts = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())} `
+      + `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+    clockEl.textContent = ts;
+  }
+  setInterval(updateClock, 1000);
+  updateClock();
+
+  // ===== Helpers =====
+  function diffHoursFromNow(isoString) {
+    if (!isoString) return null;
+    const t = new Date(isoString).getTime();
+    if (Number.isNaN(t)) return null;
+    const diffMs = Date.now() - t;
+    return diffMs / (1000 * 60 * 60);
+  }
+
+  function ragStatus(isoString) {
+    const hours = diffHoursFromNow(isoString);
+    if (hours === null) {
+      return {
+        className: "grey",
+        label: "Not treated",
+        hoursText: "-"
+      };
+    }
+
+    const rounded = Math.floor(hours);
+    let className;
+    if (hours < GREEN_LIMIT_HOURS) {
+      className = "green";
+    } else if (hours < AMBER_LIMIT_HOURS) {
+      className = "amber";
+    } else {
+      className = "red";
+    }
+
+    return {
+      className,
+      label: `${rounded}h`,
+      hoursText: `${rounded}`
+    };
+  }
+
+  function groupAreas(rows) {
+    const set = new Set();
+    rows.forEach(r => {
+      if (r.area) set.add(r.area);
+    });
+    return Array.from(set).sort();
+  }
+
+  function showError(msg) {
+    errorBanner.textContent = msg;
+    errorBanner.style.display = "block";
+  }
+
+  function clearError() {
+    errorBanner.textContent = "";
+    errorBanner.style.display = "none";
+  }
+
+  // ===== Rendering =====
+  function renderAreaOptions() {
+    const areas = groupAreas(allPoints);
+    // reset except "ALL"
+    while (areaSelect.options.length > 1) {
+      areaSelect.remove(1);
+    }
+    areas.forEach(area => {
+      const opt = document.createElement("option");
+      opt.value = area;
+      opt.textContent = area;
+      areaSelect.appendChild(opt);
+    });
+
+    // keep filter if it still exists, else reset to ALL
+    const currentExists = areas.includes(currentAreaFilter);
+    if (!currentExists && currentAreaFilter !== "ALL") {
+      currentAreaFilter = "ALL";
+      areaSelect.value = "ALL";
+    } else {
+      areaSelect.value = currentAreaFilter;
+    }
+  }
+
+  function getFilteredRows() {
+    if (currentAreaFilter === "ALL") return allPoints;
+    return allPoints.filter(r => r.area === currentAreaFilter);
+  }
+
+  function renderTable() {
+    const rows = getFilteredRows();
+    pointsTable.innerHTML = "";
+
+    if (!rows.length) {
+      const tr = document.createElement("tr");
+      const td = document.createElement("td");
+      td.colSpan = 9;
+      td.textContent = "No points found for this filter.";
+      td.style.textAlign = "center";
+      td.style.padding = "1rem";
+      tr.appendChild(td);
+      pointsTable.appendChild(tr);
+    } else {
+      rows.forEach(row => {
+        const status = ragStatus(row.last_treated_at);
+
+        const tr = document.createElement("tr");
+
+        const tdArea = document.createElement("td");
+        tdArea.textContent = row.area;
+
+        const tdPoint = document.createElement("td");
+        tdPoint.innerHTML = `<span class="badge">${row.point_number || "?"}</span>`;
+
+        const tdLocation = document.createElement("td");
+        tdLocation.textContent = row.location || "";
+
+        const tdNotes = document.createElement("td");
+        tdNotes.textContent = row.notes || "";
+        tdNotes.classList.add("notes");
+
+        const tdLast = document.createElement("td");
+        tdLast.textContent = row.last_treated_at
+          ? new Date(row.last_treated_at).toLocaleString()
+          : "-";
+
+        const tdHours = document.createElement("td");
+        tdHours.textContent = status.hoursText;
+
+        const tdStatus = document.createElement("td");
+        tdStatus.classList.add("status-cell");
+        const dot = document.createElement("span");
+        dot.classList.add("status-dot", status.className);
+        const txt = document.createElement("span");
+        txt.classList.add("status-text");
+        txt.textContent = status.label;
+        tdStatus.appendChild(dot);
+        tdStatus.appendChild(txt);
+
+        const tdAction = document.createElement("td");
+        const btnTreat = document.createElement("button");
+        btnTreat.classList.add("btn", "btn-primary");
+        btnTreat.textContent = "Treat now";
+        btnTreat.disabled = isSaving;
+        btnTreat.addEventListener("click", () => onTreatNow(row));
+        tdAction.appendChild(btnTreat);
+
+        const tdDelete = document.createElement("td");
+        const btnDel = document.createElement("button");
+        btnDel.classList.add("btn", "btn-danger");
+        btnDel.textContent = "Delete";
+        btnDel.disabled = isSaving;
+        btnDel.addEventListener("click", () => onDelete(row));
+        tdDelete.appendChild(btnDel);
+
+        tr.appendChild(tdArea);
+        tr.appendChild(tdPoint);
+        tr.appendChild(tdLocation);
+        tr.appendChild(tdNotes);
+        tr.appendChild(tdLast);
+        tr.appendChild(tdHours);
+        tr.appendChild(tdStatus);
+        tr.appendChild(tdAction);
+        tr.appendChild(tdDelete);
+
+        pointsTable.appendChild(tr);
+      });
+    }
+
+    summaryText.textContent = `${rows.length} points loaded${currentAreaFilter !== "ALL" ? ` · ${currentAreaFilter}` : ""}`;
+  }
+
+  // ===== Data loading =====
+  async function loadData() {
+    clearError();
+    loadingEl.style.display = "block";
+    loadingEl.textContent = "Loading points from Supabase…";
+
+    const { data, error } = await supabaseClient
+      .from(TABLE_NAME)
+      .select("*")
+      .order("area", { ascending: true })
+      .order("point_number", { ascending: true });
+
+    if (error) {
+      console.error(error);
+      loadingEl.textContent = "Failed to load data.";
+      showError("Error loading data from Supabase. Check your URL / anon key / table name.");
+      return;
+    }
+
+    allPoints = data || [];
+    renderAreaOptions();
+    renderTable();
+    loadingEl.style.display = "none";
+  }
+
+  // ===== Actions =====
+  async function onTreatNow(row) {
+    if (isSaving) return;
+
+    clearError();
+    isSaving = true;
+    renderTable(); // disable buttons
+
+    const nowIso = new Date().toISOString();
+
+    const payload = {
+      area: row.area,
+      point_number: row.point_number,
+      location: row.location,
+      notes: row.notes,
+      last_treated_at: nowIso
+    };
+
+    const { error } = await supabaseClient
+      .from(TABLE_NAME)
+      .upsert(payload, {
+        onConflict: "area,point_number"
+      });
+
+    if (error) {
+      console.error(error);
+      showError("Failed to save treatment. Check Supabase permissions (RLS) and constraints.");
+      isSaving = false;
+      renderTable();
+      return;
+    }
+
+    // Refresh from source of truth
+    await loadData();
+    isSaving = false;
+    renderTable();
+  }
+
+  async function onDelete(row) {
+    if (isSaving) return;
+
+    const confirmed = window.confirm(
+      `Delete point ${row.point_number} in area ${row.area}?`
+    );
+    if (!confirmed) return;
+
+    clearError();
+    isSaving = true;
+    renderTable();
+
+    const { error } = await supabaseClient
+      .from(TABLE_NAME)
+      .delete()
+      .eq("area", row.area)
+      .eq("point_number", row.point_number);
+
+    if (error) {
+      console.error(error);
+      showError("Failed to delete point. Check Supabase permissions (RLS).");
+      isSaving = false;
+      renderTable();
+      return;
+    }
+
+    // Update local cache
+    allPoints = allPoints.filter(
+      p => !(p.area === row.area && p.point_number === row.point_number)
+    );
+    renderAreaOptions();
+    isSaving = false;
+    renderTable();
+  }
+
+  async function onAddPoint(event) {
+    event.preventDefault();
+    if (isSaving) return;
+
+    clearError();
+
+    const area = newAreaInput.value.trim();
+    const point_number = newPointInput.value.trim();
+    const location = newLocationInput.value.trim();
+    const notes = newNotesInput.value.trim();
+
+    if (!area || !point_number) {
+      showError("Area and point are required.");
+      return;
+    }
+
+    isSaving = true;
+    renderTable();
+
+    const payload = {
+      area,
+      point_number,
+      location: location || null,
+      notes: notes || null
+      // last_treated_at untouched on add/update here
+    };
+
+    const { error } = await supabaseClient
+      .from(TABLE_NAME)
+      .upsert(payload, {
+        onConflict: "area,point_number"
+      });
+
+    if (error) {
+      console.error(error);
+      showError("Failed to add/update point. Check Supabase permissions and constraints.");
+      isSaving = false;
+      renderTable();
+      return;
+    }
+
+    // Refresh dataset so RAG & area filters stay in sync
+    await loadData();
+    isSaving = false;
+    renderTable();
+
+    // Auto-select that area in filter for convenience
+    currentAreaFilter = area;
+    areaSelect.value = area;
+    renderTable();
+
+    // Clear form
+    newAreaInput.value = "";
+    newPointInput.value = "";
+    newLocationInput.value = "";
+    newNotesInput.value = "";
+  }
+
+  // ===== Events =====
+  areaSelect.addEventListener("change", () => {
+    currentAreaFilter = areaSelect.value;
+    renderTable();
+  });
+
+  addPointForm.addEventListener("submit", onAddPoint);
+
+  // ===== Initial load =====
+  loadData();
+</script>
+</body>
+</html>
