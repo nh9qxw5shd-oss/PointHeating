@@ -32,7 +32,72 @@
       opacity: 0.8;
     }
 
-    main {
+    
+    header .header-actions{
+      display:flex;
+      align-items:center;
+      gap:0.75rem;
+    }
+
+    /* Simple modal (idiot-proofing) */
+    .modal-backdrop{
+      position: fixed;
+      inset: 0;
+      background: rgba(17,24,39,0.55);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      z-index: 9999;
+    }
+    .modal{
+      background:#ffffff;
+      color:#111827;
+      border-radius:0.75rem;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+      max-width: 520px;
+      width: 100%;
+      padding: 1rem;
+    }
+    .modal h2{
+      font-size: 1rem;
+      margin: 0 0 0.5rem 0;
+      color:#111827;
+    }
+    .modal p{
+      font-size: 0.9rem;
+      color:#374151;
+      margin: 0 0 0.75rem 0;
+      line-height: 1.35;
+    }
+    .modal .modal-actions{
+      display:flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      justify-content: flex-end;
+    }
+
+    .guide{
+      background:#ffffff;
+      border-radius:0.75rem;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+      padding: 0.9rem 1rem;
+      margin-bottom: 0.75rem;
+      border-left: 4px solid #111827;
+    }
+    .guide h3{
+      margin:0 0 0.35rem 0;
+      font-size:0.95rem;
+      color:#111827;
+    }
+    .guide ul{
+      margin:0.35rem 0 0 1.1rem;
+      padding:0;
+      font-size:0.85rem;
+      color:#374151;
+    }
+    .hidden{ display:none !important; }
+main {
       padding: 1.5rem;
       max-width: 1200px;
       margin: 0 auto;
@@ -276,7 +341,10 @@
 <body>
 <header>
   <h1>Winter Points Logbook</h1>
-  <div class="env">GitHub / Supabase · Killfrost tracker</div>
+  <div class="header-actions">
+    <button type="button" id="managePointsBtn" class="btn btn-secondary">Add / Edit New Point +</button>
+    <div class="env">GitHub / Supabase · Killfrost tracker</div>
+  </div>
 </header>
 
 <main>
@@ -310,35 +378,97 @@
     <div>Now: <span id="clock"></span></div>
   </div>
 
-  <!-- Add / update point form -->
-  <form id="addPointForm" class="add-form">
-    <div class="add-form-group">
-      <label for="newArea">Area</label>
-      <select id="newArea" required>
-        <option value="" disabled selected>Select area…</option>
-        <option value="Derby">Derby</option>
-        <option value="Nottingham">Nottingham</option>
-        <option value="Leicester">Leicester</option>
-        <option value="Kettering">Kettering</option>
-        <option value="Lincoln">Lincoln</option>
-        <option value="WH">WH</option>
-      </select>
+  
+  <!-- User guide (idiot-proofed) -->
+  <div class="guide" id="userGuide">
+    <h3>How to use this logbook</h3>
+    <ul>
+      <li><strong>Recording treatment:</strong> find the point you treated in the table and click <strong>Treat now</strong>. Nothing else required.</li>
+      <li><strong>Editing details:</strong> use <strong>Add / Edit New Point +</strong> in the header. Do <em>not</em> re-add a point to update notes.</li>
+      <li><strong>Adding a brand new point:</strong> also via <strong>Add / Edit New Point +</strong> (only when it truly doesn’t exist yet).</li>
+    </ul>
+  </div>
+
+  <!-- Add / Edit UI (kept out of the way) -->
+  <div id="managePanel" class="card hidden" style="margin-bottom:0.75rem;">
+    <div id="addNewPanel" class="hidden">
+      <div class="meta-row" style="margin-bottom:0.5rem;">
+        <div><strong>Add new point set</strong></div>
+        <div class="badge">New</div>
+      </div>
+      <form id="addNewForm" class="add-form">
+        <div class="add-form-group">
+          <label for="addArea">Area</label>
+          <select id="addArea" required>
+            <option value="" disabled selected>Select area…</option>
+            <option value="Derby">Derby</option>
+            <option value="Nottingham">Nottingham</option>
+            <option value="Leicester">Leicester</option>
+            <option value="Kettering">Kettering</option>
+            <option value="Lincoln">Lincoln</option>
+            <option value="WH">WH</option>
+          </select>
+        </div>
+        <div class="add-form-group">
+          <label for="addPoint">Point</label>
+          <input id="addPoint" type="text" placeholder="e.g. 123A" required />
+        </div>
+        <div class="add-form-group">
+          <label for="addLocation">Location</label>
+          <input id="addLocation" type="text" placeholder="e.g. West Jn" />
+        </div>
+        <div class="add-form-group">
+          <label for="addNotes">Notes</label>
+          <input id="addNotes" type="text" placeholder="Defective heater / none fitted" />
+        </div>
+        <button type="submit" class="btn btn-primary">Save new point</button>
+        <button type="button" id="closeManageBtn1" class="btn btn-secondary">Close</button>
+      </form>
     </div>
-    <div class="add-form-group">
-      <label for="newPoint">Point</label>
-      <input id="newPoint" type="text" placeholder="e.g. 123A" required />
+
+    <div id="editExistingPanel" class="hidden">
+      <div class="meta-row" style="margin-bottom:0.5rem;">
+        <div><strong>Edit existing point set</strong></div>
+        <div class="badge">Edit</div>
+      </div>
+      <form id="editExistingForm" class="add-form">
+        <div class="add-form-group" style="min-width:260px;">
+          <label for="editSelect">Choose point</label>
+          <select id="editSelect" required>
+            <option value="" disabled selected>Select a point…</option>
+          </select>
+        </div>
+        <div class="add-form-group">
+          <label>Area</label>
+          <input id="editArea" type="text" disabled />
+        </div>
+        <div class="add-form-group">
+          <label>Point</label>
+          <input id="editPoint" type="text" disabled />
+        </div>
+        <div class="add-form-group">
+          <label for="editLocation">Location</label>
+          <input id="editLocation" type="text" />
+        </div>
+        <div class="add-form-group">
+          <label for="editNotes">Notes</label>
+          <input id="editNotes" type="text" />
+        </div>
+        <button type="submit" class="btn btn-primary">Save changes</button>
+        <button type="button" id="closeManageBtn2" class="btn btn-secondary">Close</button>
+      </form>
     </div>
-    <div class="add-form-group">
-      <label for="newLocation">Location</label>
-      <input id="newLocation" type="text" placeholder="e.g. West Jn" />
+  </div>
+
+  <!-- Modal -->
+  <div id="modalBackdrop" class="modal-backdrop">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <h2 id="modalTitle">Add / Edit New Point</h2>
+      <p id="modalBody"></p>
+      <div class="modal-actions" id="modalActions"></div>
     </div>
-    <div class="add-form-group">
-      <label for="newNotes">Notes</label>
-      <input id="newNotes" type="text" placeholder="Defective heater / none fitted" />
-    </div>
-    <button type="submit" class="btn btn-primary">Add / update point</button>
-<button type="button" id="cancelEditBtn" class="btn btn-secondary">Cancel edit</button>
-  </form>
+  </div>
+
 
   <div id="errorBanner" class="error-banner"></div>
 
@@ -355,7 +485,6 @@
           <th>Hours since</th>
           <th>Status</th>
           <th>Treat</th>
-          <th>Edit</th>
           <th>Delete</th>
         </tr>
       </thead>
@@ -398,13 +527,30 @@
   const clockEl      = document.getElementById("clock");
   const errorBanner  = document.getElementById("errorBanner");
   const loadingEl    = document.getElementById("loading");
+  const managePointsBtn = document.getElementById("managePointsBtn");
+  const managePanel     = document.getElementById("managePanel");
+  const addNewPanel     = document.getElementById("addNewPanel");
+  const editExistingPanel = document.getElementById("editExistingPanel");
 
-  const addPointForm   = document.getElementById("addPointForm");
-  const newAreaInput   = document.getElementById("newArea");
-  const newPointInput  = document.getElementById("newPoint");
-  const newLocationInput = document.getElementById("newLocation");
-  const newNotesInput  = document.getElementById("newNotes");
-const cancelEditBtn = document.getElementById("cancelEditBtn");
+  const addNewForm      = document.getElementById("addNewForm");
+  const addAreaInput    = document.getElementById("addArea");
+  const addPointInput   = document.getElementById("addPoint");
+  const addLocationInput= document.getElementById("addLocation");
+  const addNotesInput   = document.getElementById("addNotes");
+  const closeManageBtn1 = document.getElementById("closeManageBtn1");
+
+  const editExistingForm = document.getElementById("editExistingForm");
+  const editSelect       = document.getElementById("editSelect");
+  const editAreaEl       = document.getElementById("editArea");
+  const editPointEl      = document.getElementById("editPoint");
+  const editLocationInput= document.getElementById("editLocation");
+  const editNotesInput   = document.getElementById("editNotes");
+  const closeManageBtn2  = document.getElementById("closeManageBtn2");
+
+  const modalBackdrop   = document.getElementById("modalBackdrop");
+  const modalTitle      = document.getElementById("modalTitle");
+  const modalBody       = document.getElementById("modalBody");
+  const modalActions    = document.getElementById("modalActions");
 
   // ===== Clock =====
   function updateClock() {
@@ -568,13 +714,6 @@ tdStatus.appendChild(statusWrap);
         btnTreat.addEventListener("click", () => onTreatNow(row));
         tdAction.appendChild(btnTreat);
 
-const tdEdit = document.createElement("td");
-const btnEdit = document.createElement("button");
-btnEdit.classList.add("btn", "btn-secondary");
-btnEdit.textContent = "Edit";
-btnEdit.disabled = isSaving;
-btnEdit.addEventListener("click", () => onEdit(row));
-tdEdit.appendChild(btnEdit);
 
         const tdDelete = document.createElement("td");
         const btnDel = document.createElement("button");
@@ -592,8 +731,7 @@ tdEdit.appendChild(btnEdit);
         tr.appendChild(tdHours);
         tr.appendChild(tdStatus);
         tr.appendChild(tdAction);
-        tr.appendChild(tdEdit);
-        tr.appendChild(tdDelete);
+tr.appendChild(tdDelete);
 
         pointsTable.appendChild(tr);
       });
@@ -672,21 +810,6 @@ tdEdit.appendChild(btnEdit);
     renderTable();
   }
 
-function onEdit(row){
-  // Populate the form with the selected row
-  newAreaInput.value = row.area || "";
-  newPointInput.value = row.point_number || "";
-  newLocationInput.value = row.location || "";
-  newNotesInput.value = row.notes || "";
-
-  // Lock the unique key fields so they can't accidentally “rename” the record
-  // (renaming is basically delete + create and people will mess it up)
-  newAreaInput.disabled = true;
-  newPointInput.disabled = true;
-
-  // Optional: scroll user to form so they actually see it
-  addPointForm.scrollIntoView({ behavior: "smooth", block: "start" });
-}
 
  async function onDelete(row) {
   if (isSaving) return;
@@ -721,21 +844,177 @@ function onEdit(row){
   renderAreaOptions();
   isSaving = false;
   renderTable();
-}
 
-  async function onAddPoint(event) {
+
+
+}
+  // ===== Manage points (idiot-proofing) =====
+  function hideManagePanels(){
+    addNewPanel.classList.add("hidden");
+    editExistingPanel.classList.add("hidden");
+    managePanel.classList.add("hidden");
+  }
+
+  function showManagePanel(panel){
+    managePanel.classList.remove("hidden");
+    addNewPanel.classList.add("hidden");
+    editExistingPanel.classList.add("hidden");
+    panel.classList.remove("hidden");
+  }
+
+  function openModal({title, body, actions}){
+    modalTitle.textContent = title || "Message";
+    modalBody.textContent  = body || "";
+    modalActions.innerHTML = "";
+
+    (actions || []).forEach(a => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = a.className || "btn btn-secondary";
+      btn.textContent = a.label || "OK";
+      btn.addEventListener("click", () => {
+        if (typeof a.onClick === "function") a.onClick();
+      });
+      modalActions.appendChild(btn);
+    });
+
+    modalBackdrop.style.display = "flex";
+  }
+
+  function closeModal(){
+    modalBackdrop.style.display = "none";
+  }
+
+  function buildEditSelectOptions(){
+    // Preserve selection if possible
+    const current = editSelect.value || "";
+
+    // Clear
+    while (editSelect.options.length > 0) editSelect.remove(0);
+    const ph = document.createElement("option");
+    ph.value = "";
+    ph.disabled = true;
+    ph.selected = true;
+    ph.textContent = "Select a point…";
+    editSelect.appendChild(ph);
+
+    const rows = [...allPoints].sort((a,b) => {
+      const aa = (a.area||"").localeCompare(b.area||"");
+      if (aa !== 0) return aa;
+      return (a.point_number||"").localeCompare(b.point_number||"");
+    });
+
+    rows.forEach(r => {
+      const opt = document.createElement("option");
+      opt.value = `${r.area}||${r.point_number}`;
+      opt.textContent = `${r.area} · ${r.point_number}${r.location ? ` (${r.location})` : ""}`;
+      editSelect.appendChild(opt);
+    });
+
+    // Restore selection if still present
+    if (current && Array.from(editSelect.options).some(o => o.value === current)) {
+      editSelect.value = current;
+      onEditSelectChange();
+    }
+  }
+
+  function onEditSelectChange(){
+    const val = editSelect.value;
+    if (!val) return;
+
+    const [area, point_number] = val.split("||");
+    const row = allPoints.find(r => r.area === area && String(r.point_number) === String(point_number));
+    if (!row) return;
+
+    editAreaEl.value = row.area || "";
+    editPointEl.value = row.point_number || "";
+    editLocationInput.value = row.location || "";
+    editNotesInput.value = row.notes || "";
+  }
+
+  function openChooser(){
+    hideManagePanels();
+    openModal({
+      title: "Add / Edit New Point",
+      body: "Choose what you actually meant to do. (Treating is NOT adding.)",
+      actions: [
+        {
+          label: "Yes, add new set",
+          className: "btn btn-primary",
+          onClick: () => {
+            closeModal();
+            // reset add form
+            addAreaInput.value = "";
+            addPointInput.value = "";
+            addLocationInput.value = "";
+            addNotesInput.value = "";
+            showManagePanel(addNewPanel);
+            managePanel.scrollIntoView({behavior:"smooth", block:"start"});
+          }
+        },
+        {
+          label: "Edit existing set",
+          className: "btn btn-secondary",
+          onClick: () => {
+            closeModal();
+            buildEditSelectOptions();
+            // reset edit form fields until selection
+            editSelect.value = "";
+            editAreaEl.value = "";
+            editPointEl.value = "";
+            editLocationInput.value = "";
+            editNotesInput.value = "";
+            showManagePanel(editExistingPanel);
+            managePanel.scrollIntoView({behavior:"smooth", block:"start"});
+          }
+        },
+        {
+          label: "Record Treatment",
+          className: "btn btn-secondary",
+          onClick: () => {
+            closeModal();
+            openModal({
+              title: "Recording treatment",
+              body: "To record treatment: find the point in the table below and click “Treat now”. No other action is required.",
+              actions: [{ label:"Got it", className:"btn btn-primary", onClick: closeModal }]
+            });
+          }
+        },
+        { label: "Cancel", className: "btn btn-secondary", onClick: closeModal }
+      ]
+    });
+  }
+
+  // Close modal on backdrop click (but not when clicking the modal itself)
+  modalBackdrop.addEventListener("click", (e) => {
+    if (e.target === modalBackdrop) closeModal();
+  });
+
+  // Add new point (brand new only)
+  async function onAddNew(event){
     event.preventDefault();
     if (isSaving) return;
 
     clearError();
 
-    const area = newAreaInput.value.trim();
-    const point_number = newPointInput.value.trim();
-    const location = newLocationInput.value.trim();
-    const notes = newNotesInput.value.trim();
+    const area = (addAreaInput.value || "").trim();
+    const point_number = (addPointInput.value || "").trim();
+    const location = (addLocationInput.value || "").trim();
+    const notes = (addNotesInput.value || "").trim();
 
     if (!area || !point_number) {
       showError("Area and point are required.");
+      return;
+    }
+
+    // Hard stop on duplicates (this is the whole reason we're doing this)
+    const exists = allPoints.some(p => p.area === area && String(p.point_number) === String(point_number));
+    if (exists) {
+      openModal({
+        title: "That point already exists",
+        body: "This point is already on the list. Use “Edit existing set” or click “Treat now” in the table.",
+        actions: [{ label:"OK", className:"btn btn-primary", onClick: closeModal }]
+      });
       return;
     }
 
@@ -747,42 +1026,76 @@ function onEdit(row){
       point_number,
       location: location || null,
       notes: notes || null
-      // last_treated_at untouched on add/update here
     };
 
     const { error } = await supabaseClient
       .from(TABLE_NAME)
-      .upsert(payload, {
-        onConflict: "area,point_number"
-      });
+      .insert(payload);
 
     if (error) {
       console.error(error);
-      showError("Failed to add/update point. Check Supabase permissions and constraints.");
+      showError("Failed to add point. Check Supabase permissions and constraints.");
       isSaving = false;
       renderTable();
       return;
     }
 
-    // Refresh dataset so RAG & area filters stay in sync
     await loadData();
     isSaving = false;
     renderTable();
 
-    // Auto-select that area in filter for convenience
+    // Auto-filter to that area for convenience
     currentAreaFilter = area;
     areaSelect.value = area;
     renderTable();
 
-    // Clear form
-    newAreaInput.value = "";
-    newPointInput.value = "";
-    newLocationInput.value = "";
-    newNotesInput.value = "";
+    hideManagePanels();
+  }
 
-newAreaInput.disabled = false;
-newPointInput.disabled = false;
+  // Save edits to existing point (details only)
+  async function onSaveExisting(event){
+    event.preventDefault();
+    if (isSaving) return;
 
+    clearError();
+
+    const val = editSelect.value;
+    if (!val) {
+      showError("Choose a point to edit.");
+      return;
+    }
+
+    const [area, point_number] = val.split("||");
+    const location = (editLocationInput.value || "").trim();
+    const notes    = (editNotesInput.value || "").trim();
+
+    isSaving = true;
+    renderTable();
+
+    const payload = {
+      area,
+      point_number,
+      location: location || null,
+      notes: notes || null
+      // last_treated_at untouched
+    };
+
+    const { error } = await supabaseClient
+      .from(TABLE_NAME)
+      .upsert(payload, { onConflict: "area,point_number" });
+
+    if (error) {
+      console.error(error);
+      showError("Failed to save changes. Check Supabase permissions (RLS) and constraints.");
+      isSaving = false;
+      renderTable();
+      return;
+    }
+
+    await loadData();
+    isSaving = false;
+    renderTable();
+    hideManagePanels();
   }
 
   // ===== Events =====
@@ -790,19 +1103,16 @@ newPointInput.disabled = false;
     currentAreaFilter = areaSelect.value;
     renderTable();
   });
+  
+  managePointsBtn.addEventListener("click", openChooser);
 
-  addPointForm.addEventListener("submit", onAddPoint);
+  closeManageBtn1.addEventListener("click", () => hideManagePanels());
+  closeManageBtn2.addEventListener("click", () => hideManagePanels());
 
-cancelEditBtn.addEventListener("click", () => {
-  newAreaInput.value = "";
-  newPointInput.value = "";
-  newLocationInput.value = "";
-  newNotesInput.value = "";
-  newAreaInput.disabled = false;
-  newPointInput.disabled = false;
-});
-
-  // ===== Initial load =====
+  addNewForm.addEventListener("submit", onAddNew);
+  editExistingForm.addEventListener("submit", onSaveExisting);
+  editSelect.addEventListener("change", onEditSelectChange);
+// ===== Initial load =====
   loadData();
 
   // Live refresh (background) every 10 seconds
