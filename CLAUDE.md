@@ -13,7 +13,8 @@ Killfrost treatment log; see README.md.
   `overseer.derbycontrol.co.uk/points/*` here. Vercel framework comes from `vercel.json`.
   `public/storage-bridge.html` is byte-identical across systems; change all or none. Browser
   storage keys are prefixed `points_`.
-- Root `index.html` is the original page kept for GitHub Pages; do not develop it further.
+- Live at `weather-resilience.derbycontrol.co.uk/points`. Root `index.html` only redirects the old
+  GitHub Pages address there; the original page is in `legacy/`, kept for reference.
 
 ## Design language
 Autumn Hub house style (`nh9qxw5shd-oss/autumn-hub`, `web/src/`): the stylesheet, `ui.tsx` and

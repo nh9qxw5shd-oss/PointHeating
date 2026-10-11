@@ -23,11 +23,12 @@ npm run lint && npm run type-check && npm test && npm run build
 
 ## Addresses
 
-- `https://points.derbycontrol.co.uk/points` — the logbook (Vercel project `winter-points`).
+- `https://weather-resilience.derbycontrol.co.uk/points` — the logbook (Vercel project
+  `weather-resilience`); the root and `/index.html` redirect there.
 - `https://overseer.derbycontrol.co.uk/points` — the same app inside the Derby Control hub.
-- `index.html` at the repository root is the original single-page logbook, still published on
-  GitHub Pages (`nh9qxw5shd-oss.github.io/PointHeating`) until the new address is live; then it
-  becomes a redirect.
+- `index.html` at the repository root redirects the old GitHub Pages address
+  (`nh9qxw5shd-oss.github.io/PointHeating`) to the logbook. The original single-page logbook is
+  kept in `legacy/` for reference.
 
 ## Data
 
