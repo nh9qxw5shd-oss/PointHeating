@@ -11,6 +11,9 @@ const nextConfig: NextConfig = {
   basePath: BASE_PATH,
   env: { NEXT_PUBLIC_BASE_PATH: BASE_PATH },
   serverExternalPackages: ["pdfjs-dist"],
+  // pdfjs loads its worker by a dynamic import at runtime, which Vercel's file tracing cannot
+  // see; without this the deployed function has no pdf.worker.mjs and every PDF fails.
+  outputFileTracingIncludes: { "/api/hotrail": ["./node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs"] },
   async redirects() {
     const temp = { basePath: false as const, permanent: false };
     return [
