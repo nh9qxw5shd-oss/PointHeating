@@ -136,7 +136,7 @@ export default function Logbook() {
   return (
     <>
       <PageHeader
-        eyebrow="Winter points"
+        eyebrow="Ice and point heating"
         title={area ? `${area} points` : "Points logbook"}
         subtitle={
           <>
@@ -186,7 +186,7 @@ export default function Logbook() {
         <Chips<string>
           allLabel="All areas"
           value={area}
-          onChange={(v) => router.push(v ? `/?area=${encodeURIComponent(v)}` : "/")}
+          onChange={(v) => router.push(v ? `/points?area=${encodeURIComponent(v)}` : "/points")}
           options={AREAS.map((a) => ({ value: a, label: a }))}
           counts={areaCounts}
         />

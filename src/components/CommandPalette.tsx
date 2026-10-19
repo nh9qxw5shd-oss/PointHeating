@@ -1,12 +1,13 @@
 "use client";
 
-// Command palette (Ctrl/Cmd + K): find a point set (opens its area and highlights it), jump to an
-// area, add or edit a point.
+// Command palette (Ctrl/Cmd + K): jump to a section, find a point set (opens its area and
+// highlights it), jump to a MOM area, add or edit a point.
 
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowRight, CornerDownLeft, LucideIcon, MapPin, Pencil, Plus, Search, Snowflake } from "lucide-react";
 import { useHotkey, useNow } from "@/lib/hooks";
+import { NAV_ITEMS } from "@/lib/nav";
 import { AREAS, keyOf, RAG_META, status } from "@/lib/points/points";
 import { requestAction, useLog } from "@/lib/points/store";
 
@@ -66,7 +67,8 @@ export function CommandPalette() {
       { id: "a-add", group: "Actions", title: "Add a new point set", hint: "Only when it is not on the list yet", icon: Plus, keywords: "add new point create", run: () => requestAction({ kind: "add" }) },
       { id: "a-edit", group: "Actions", title: "Edit a point set", hint: "Location and notes", icon: Pencil, keywords: "edit change notes location", run: () => requestAction({ kind: "edit" }) },
     ];
-    const areas: Entry[] = AREAS.map((a) => ({ id: `r-${a}`, group: "MOM areas", title: a, icon: MapPin, run: () => router.push(`/?area=${encodeURIComponent(a)}`) }));
+    const sections: Entry[] = NAV_ITEMS.map((i) => ({ id: `s-${i.href}`, group: "Sections", title: i.label, hint: i.desc, icon: i.icon, keywords: i.keywords, run: () => router.push(i.href) }));
+    const areas: Entry[] = AREAS.map((a) => ({ id: `r-${a}`, group: "MOM areas", title: a, icon: MapPin, run: () => router.push(`/points?area=${encodeURIComponent(a)}`) }));
     const points: Entry[] = rows.map((r) => {
       const s = status(r.last_treated_at, now);
       return {
@@ -77,12 +79,12 @@ export function CommandPalette() {
         icon: Snowflake,
         keywords: `${r.notes ?? ""} ${r.location ?? ""}`,
         run: () => {
-          router.push(`/?area=${encodeURIComponent(r.area)}`);
+          router.push(`/points?area=${encodeURIComponent(r.area)}`);
           requestAction({ kind: "focus", key: keyOf(r) });
         },
       };
     });
-    return [...actions, ...points, ...areas];
+    return [...sections, ...actions, ...points, ...areas];
   }, [rows, now, router]);
 
   const needle = q.trim().toLowerCase();
@@ -129,7 +131,7 @@ export function CommandPalette() {
           <input
             autoFocus
             className="h-12 flex-1 bg-transparent text-sm outline-none placeholder:text-faint"
-            placeholder="Point number, location or area…"
+            placeholder="Section, point number, location or area…"
             value={q}
             onChange={(e) => setQ(e.target.value)}
             onKeyDown={(e) => {

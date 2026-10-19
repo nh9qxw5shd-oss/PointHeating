@@ -1,11 +1,5 @@
-import { Suspense } from "react";
-import Logbook from "@/components/points/Logbook";
-import { PageSkeleton } from "@/components/ui";
+import Overview from "@/components/weather/Overview";
 
 export default function Page() {
-  return (
-    <Suspense fallback={<PageSkeleton kind="table" />}>
-      <Logbook />
-    </Suspense>
-  );
+  return <Overview />;
 }

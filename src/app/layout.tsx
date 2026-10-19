@@ -9,8 +9,8 @@ const manrope = localFont({ src: "./fonts/manrope.woff2", variable: "--font-manr
 const jetbrains = localFont({ src: "./fonts/jetbrains-mono.woff2", variable: "--font-jetbrains", weight: "400 700", display: "swap" });
 
 export const metadata: Metadata = {
-  title: { default: "Winter Points Logbook", template: "%s · Winter Points" },
-  description: "Killfrost treatment log for points without working heaters: when each set was last treated and what is due.",
+  title: { default: "Weather Resilience", template: "%s · Weather Resilience" },
+  description: "Derby Control's seasonal and weather resilience checks: ice and point heating, hot weather and CRT, rainfall and flood sites, high winds, vegetation and chainsaw competency.",
 };
 
 export const viewport: Viewport = { themeColor: "#0b0e13", colorScheme: "dark light" };

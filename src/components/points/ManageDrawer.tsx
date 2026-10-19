@@ -90,7 +90,7 @@ export default function ManageDrawer() {
       await refresh();
       toast.success(`${p} added to ${a}`);
       setOpen(false);
-      router.push(`/?area=${encodeURIComponent(a)}`);
+      router.push(`/points?area=${encodeURIComponent(a)}`);
       requestAction({ kind: "focus", key: `${a}||${p}` });
     } catch (e) {
       toast.error((e as Error).message);

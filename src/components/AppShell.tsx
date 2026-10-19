@@ -1,21 +1,24 @@
 "use client";
 
-// Application shell (Autumn Hub kit): sidebar with the logbook and each MOM area (with how many of
-// its points are over 48 hours), a top bar with search, the overall status, the London clock and
-// the theme toggle.
+// Application shell (Autumn Hub kit): sidebar with the sections, a top bar with search, the
+// week's weather status, the London clock and the theme toggle. The hub hides the sidebar and
+// the duplicated controls by the selectors in 09 §4.2, so those stay exactly as they are.
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { ReactNode, Suspense, useLayoutEffect, useRef, useState } from "react";
-import { BookOpen, Menu, Moon, PanelLeftClose, PanelLeftOpen, Plus, Search, Sun, X } from "lucide-react";
+import { Menu, Moon, PanelLeftClose, PanelLeftOpen, Plus, Search, Sun, X } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import { useHydrated, useLocalStorage, useNow } from "@/lib/hooks";
+import { NAV, navFor } from "@/lib/nav";
 import { AREAS, status, summarise } from "@/lib/points/points";
 import { requestAction, useLog, useLogPolling } from "@/lib/points/store";
+import { headlines } from "@/lib/weather/flags";
+import { useForecast, useForecastPolling } from "@/lib/weather/store";
 import { CommandPalette, openPalette } from "@/components/CommandPalette";
 import ManageDrawer from "@/components/points/ManageDrawer";
 
-// Points crossing with a snowflake in Network Rail orange (same mark as the favicon, src/app/icon.svg).
+// A sun over a rail line in Network Rail orange (same mark as the favicon, src/app/icon.svg).
 export function BrandMark({ size = 28 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden>
@@ -38,6 +41,7 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   const now = useNow(60_000).getTime();
   const listRef = useRef<HTMLDivElement>(null);
   const indicatorRef = useRef<HTMLSpanElement>(null);
+  const onPoints = path === "/points" || path.startsWith("/points/");
 
   useLayoutEffect(() => {
     const list = listRef.current;
@@ -58,35 +62,48 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <div ref={listRef} className="relative">
       <span ref={indicatorRef} className="nav-indicator" style={{ top: 0, opacity: 0 }} />
-      <div className="nav-group-label">Logbook</div>
-      <Link href="/" className="nav-item" aria-current={path === "/" && !area ? "page" : undefined} title="Every point set, grouped by MOM area" onClick={onNavigate}>
-        <BookOpen size={17} strokeWidth={2.1} />
-        <span className="nav-label">All areas</span>
-      </Link>
-      <div className="nav-group-label">MOM areas</div>
-      {AREAS.map((a) => {
-        const inArea = rows.filter((r) => r.area === a);
-        const red = inArea.filter((r) => status(r.last_treated_at, now).rag === "red").length;
-        return (
-          <Link key={a} href={`/?area=${encodeURIComponent(a)}`} className="nav-item" aria-current={area === a ? "page" : undefined} onClick={onNavigate} title={`${inArea.length} point sets in ${a}`}>
-            <span className="dot" style={{ color: red ? "var(--poor)" : inArea.length ? "var(--good)" : "var(--text-faint)" }} />
-            <span className="nav-label flex flex-1 items-baseline justify-between gap-2">
-              <span>{a}</span>
-              <span className="font-mono text-[11px] text-faint">{red ? `${red} due` : inArea.length || ""}</span>
-            </span>
-          </Link>
-        );
-      })}
-      <button
-        className="nav-item w-[calc(100%-1rem)] text-dim"
-        onClick={() => {
-          requestAction({ kind: "add" });
-          onNavigate?.();
-        }}
-      >
-        <Plus size={17} />
-        <span className="nav-label">Add / edit point</span>
-      </button>
+      {NAV.map((g) => (
+        <div key={g.label}>
+          <div className="nav-group-label">{g.label}</div>
+          {g.items.map((i) => {
+            const current = i.href === "/" ? path === "/" : (path === i.href || path.startsWith(i.href + "/")) && !(i.href === "/points" && area);
+            return (
+              <Link key={i.href} href={i.href} className="nav-item" aria-current={current ? "page" : undefined} title={i.desc} onClick={onNavigate}>
+                <i.icon size={17} strokeWidth={2.1} />
+                <span className="nav-label">{i.label}</span>
+              </Link>
+            );
+          })}
+        </div>
+      ))}
+      {onPoints && (
+        <>
+          <div className="nav-group-label">MOM areas</div>
+          {AREAS.map((a) => {
+            const inArea = rows.filter((r) => r.area === a);
+            const red = inArea.filter((r) => status(r.last_treated_at, now).rag === "red").length;
+            return (
+              <Link key={a} href={`/points?area=${encodeURIComponent(a)}`} className="nav-item" aria-current={area === a ? "page" : undefined} onClick={onNavigate} title={`${inArea.length} point sets in ${a}`}>
+                <span className="dot" style={{ color: red ? "var(--poor)" : inArea.length ? "var(--good)" : "var(--text-faint)" }} />
+                <span className="nav-label flex flex-1 items-baseline justify-between gap-2">
+                  <span>{a}</span>
+                  <span className="font-mono text-[11px] text-faint">{red ? `${red} due` : inArea.length || ""}</span>
+                </span>
+              </Link>
+            );
+          })}
+          <button
+            className="nav-item w-[calc(100%-1rem)] text-dim"
+            onClick={() => {
+              requestAction({ kind: "add" });
+              onNavigate?.();
+            }}
+          >
+            <Plus size={17} />
+            <span className="nav-label">Add / edit point</span>
+          </button>
+        </>
+      )}
     </div>
   );
 }
@@ -97,8 +114,8 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
       <Link href="/" className="flex items-center gap-2.5 px-4 py-4">
         <BrandMark />
         <span className="nav-label leading-tight">
-          <span className="block text-[15px] font-extrabold tracking-tight">Winter Points</span>
-          <span className="block text-[11px] font-semibold text-faint">Killfrost treatment log</span>
+          <span className="block text-[15px] font-extrabold tracking-tight">Weather Resilience</span>
+          <span className="block text-[11px] font-semibold text-faint">Seasonal checks and monitoring</span>
         </span>
       </Link>
       <div className="flex-1 overflow-y-auto pb-4">
@@ -124,7 +141,7 @@ function MobileNav({ open, onClose }: { open: boolean; onClose: () => void }) {
         <div className="flex items-center justify-between px-4 py-4">
           <span className="flex items-center gap-2.5">
             <BrandMark />
-            <span className="text-[15px] font-extrabold">Winter Points</span>
+            <span className="text-[15px] font-extrabold">Weather Resilience</span>
           </span>
           <button className="btn btn-ghost btn-icon" onClick={onClose} aria-label="Close menu">
             <X size={18} />
@@ -142,16 +159,20 @@ function MobileNav({ open, onClose }: { open: boolean; onClose: () => void }) {
 
 // ----------------------------------------------------------------- topbar
 
+/** The week in one chip: the worst thing the forecast asks for, or that the points log is due. */
 function StatusChip() {
-  const { rows, loaded, error } = useLog();
+  const { forecast, loaded, error } = useForecast();
+  const log = useLog();
   const now = useNow(60_000).getTime();
   const hydrated = useHydrated();
   if (!loaded || !hydrated) return null;
-  const s = summarise(rows, now);
-  const color = error ? "var(--poor)" : s.counts.red ? "var(--poor)" : s.counts.amber ? "var(--moderate)" : "var(--good)";
-  const text = error ? "Offline" : s.counts.red ? `${s.counts.red} over 48h` : s.counts.amber ? `${s.counts.amber} at 24–48h` : "All in date";
+  const heads = forecast ? headlines(forecast, [...new Set(forecast.days.map((d) => d.area_key))], 3) : [];
+  const red = heads.filter((h) => h.tone === "red");
+  const pointsDue = log.loaded ? summarise(log.rows, now).counts.red : 0;
+  const color = error ? "var(--poor)" : red.length || pointsDue ? "var(--poor)" : heads.length ? "var(--moderate)" : "var(--good)";
+  const text = error ? "Forecast offline" : red.length ? red[0].text : pointsDue ? `${pointsDue} points over 48h` : heads.length ? heads[0].text : "Nothing triggered";
   return (
-    <span className="chip !cursor-default" title={error ?? `${s.total} point sets`}>
+    <span className="chip !cursor-default max-w-[40vw] truncate" title={error ?? (heads.map((h) => h.text).join(" · ") || "No forecast threshold reached in the next three days")}>
       <span className="dot" style={{ color }} />
       {text}
     </span>
@@ -185,6 +206,8 @@ function ThemeToggle() {
 }
 
 function TopBar({ onMenu }: { onMenu: () => void }) {
+  const path = usePathname();
+  const here = navFor(path);
   return (
     <header className="topbar glass flex items-center gap-2 px-3 sm:px-4">
       <button className="btn btn-ghost btn-icon lg:hidden" onClick={onMenu} aria-label="Open menu">
@@ -192,11 +215,11 @@ function TopBar({ onMenu }: { onMenu: () => void }) {
       </button>
       <Link href="/" className="flex items-center gap-2 lg:hidden">
         <BrandMark size={22} />
-        <span className="text-sm font-extrabold">Points</span>
+        <span className="text-sm font-extrabold">{here?.short ?? "Weather"}</span>
       </Link>
-      <button className="btn btn-ghost ml-1 hidden min-w-[220px] justify-start gap-2 border border-edge bg-sunken text-dim sm:flex" onClick={() => openPalette()} title="Find a point or an action">
+      <button className="btn btn-ghost ml-1 hidden min-w-[220px] justify-start gap-2 border border-edge bg-sunken text-dim sm:flex" onClick={() => openPalette()} title="Find a section or a point set">
         <Search size={15} />
-        <span className="flex-1 text-left text-xs font-medium">Find a point…</span>
+        <span className="flex-1 text-left text-xs font-medium">Find a section or point…</span>
         <span className="flex gap-0.5">
           <kbd className="kbd">Ctrl</kbd>
           <kbd className="kbd">K</kbd>
@@ -219,6 +242,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
   const [collapsed, setCollapsed] = useLocalStorage("points_nav_collapsed", false);
   const [menuOpen, setMenuOpen] = useState(false);
   useLogPolling();
+  useForecastPolling();
   return (
     <div className="app-shell" data-collapsed={collapsed ? "true" : "false"}>
       <Sidebar collapsed={collapsed} onToggle={() => setCollapsed((c) => !c)} />
@@ -226,7 +250,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
       <div className="flex min-w-0 flex-col">
         <TopBar onMenu={() => setMenuOpen(true)} />
         <main className="content flex-1">{children}</main>
-        <footer className="content !py-4 text-xs text-faint">Winter Points Logbook · Derby Control · Green under 24h, amber 24–48h, red 48h and over since last treatment</footer>
+        <footer className="content !py-4 text-xs text-faint">Weather Resilience · Derby Control · Forecast from the NR Route 7 Day Forecast via DLog2; thresholds from the route&apos;s seasonal plans</footer>
       </div>
       <CommandPalette />
       <ManageDrawer />
