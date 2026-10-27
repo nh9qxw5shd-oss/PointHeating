@@ -30,6 +30,10 @@ chainsaw competency. See README.md.
 - Forecast areas map onto MOM areas in `src/lib/weather/forecast.ts` (`FORECAST_AREAS`); CRT
   sites map onto hot-rail areas in `crt.ts` (`hotRailAreaFor`). Both are assumptions to check
   first if a flag lands on the wrong desk.
+- Overseer is the only way in (27 Oct): the Vercel project has no domain and is reached only through
+  `overseer.derbycontrol.co.uk/weather` (PotatOS docs/09 §4.6). The last redirect in `next.config` sends a page
+  load without Overseer's `x-overseer-hop` marker to the same address on Overseer. Absolute links
+  this system hands out use `https://overseer.derbycontrol.co.uk/weather/…`. Do not add a domain.
 
 ## Design language
 Autumn Hub house style (`nh9qxw5shd-oss/autumn-hub`, `web/src/`): the stylesheet, `ui.tsx` and
